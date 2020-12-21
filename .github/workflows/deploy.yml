@@ -1,0 +1,118 @@
+name: CI
+#on:
+#  repository_dispatch:
+#    types: [trigger-workflow-deploy]
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+
+env:
+  need_commits: 0
+  node-version: 10.x
+
+
+jobs:
+
+  # Run cleaning process only if workflow is triggered by the non-JetBrains/intellij-platform-plugin-template repository.
+  all:
+    #name: Template Cleanup
+    runs-on: ubuntu-latest
+    #if: github.event.repository.name != 'notes-vuepress'
+    steps:
+
+      # Check out current repository
+      - name: Fetch Sources
+        uses: actions/checkout@v2
+
+      # Cleanup project
+      - name: Cleanup
+        if: github.event.repository.name != 'notes-vuepress'
+        run: |
+          [ -f .github/readme ] && {
+          export LC_CTYPE=C
+          export LANG=C
+
+          # Prepare variables
+          NAME="${GITHUB_REPOSITORY##*/}"
+          SAFE_NAME=$(echo $NAME | sed 's/[^a-zA-Z0-9]//g' | tr '[:upper:]' '[:lower:]')
+          ACTOR=$(echo $GITHUB_ACTOR | tr '[:upper:]' '[:lower:]')
+          GROUP="com.github.$ACTOR.$SAFE_NAME"
+          PORT=4000
+
+          # Replace placeholders in the template-cleanup files
+          grep -rlZ '%PORT%'       .github/template-cleanup/* --exclude-dir=.exc.dir | xargs -0 sed -i "s/%PORT%/$PORT/g" && echo 'PORT processed'
+          grep -rlZ '%NAME%'       .github/template-cleanup/* --exclude-dir=.exc.dir | xargs -0 sed -i "s/%NAME%/$NAME/g" && echo 'NAME processed'
+          grep -rlZ '%USER%'       .github/template-cleanup/* --exclude-dir=.exc.dir | xargs -0 sed -i "s/%USER%/$ACTOR/g" && echo 'USER processed'
+          grep -rlZ '%REPOSITORY%' .github/template-cleanup/* --exclude-dir=.exc.dir | xargs -0 sed -i "s/%REPOSITORY%/${GITHUB_REPOSITORY/\//\\/}/g" && echo 'REPOSITORY processed'
+          grep -rlZ '%GROUP%'      .github/template-cleanup/* --exclude-dir=.exc.dir | xargs -0 sed -i "s/%GROUP%/$GROUP/g" && echo 'GROUP processed'
+
+          # Replace template package name in project files with $GROUP
+          #find docs -type f -exec sed -i "s/org.jetbrains.plugins.template/$GROUP/g" {} +
+          #find docs -type f -exec sed -i "s/Template/$NAME/g" {} +
+          #find docs -type f -exec sed -i "s/JetBrains/$ACTOR/g" {} +
+
+          # Remove lines marked with #REMOVE-ON-CLEANUP#
+          # find . -type f -exec sed -i '/#REMOVE-ON-CLEANUP#/d' {} + && echo "processed"
+
+          # Move content
+          # mkdir -p src/main/kotlin/${GROUP//.//}
+          cp .github/template-cleanup/* . || :
+          # cp -R src/main/kotlin/org/jetbrains/plugins/template/* src/main/kotlin/${GROUP//.//}/
+          cp -R .github/template-cleanup/vuepress/* ./docs/.vuepress/
+          cp .github/template-cleanup/docs/* ./docs/ || :
+          [ -d ./docs/$NAME/ ] || mkdir -p ./docs/$NAME/; cp -R .github/template-cleanup/docs/NAME/* ./docs/$NAME/ && rm -rf ./docs/notes-vuepress
+          [ -d ./docs/zh/$NAME/ ] || mkdir -p ./docs/zh/$NAME/; cp -R .github/template-cleanup/docs/NAME/* ./docs/zh/$NAME/ && rm -rf ./docs/zh/notes-vuepress
+          echo "processed copy"
+
+          # Cleanup
+          rm -rf \
+            .github/readme \
+            .github/template-cleanup/ \
+            .github/LICENSE 2>/dev/null || true
+          echo "need_commits=1" >> $GITHUB_ENV
+          }
+          echo "processed rm"
+
+      # Commit modified files
+      - name: Commit files
+        if: github.event.repository.name != 'notes-vuepress' && env.need_commits == 1
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git status
+          git commit -m "Template cleanup"
+
+      # Push changes
+      - name: Push changes
+        if: github.event.repository.name != 'notes-vuepress' && env.need_commits == 1
+        uses: ad-m/github-push-action@master
+        with:
+          branch: master
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+#  build-and-deploy:
+#    runs-on: ubuntu-latest
+#    steps:
+#      #- uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ env.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.node-version }}
+      - run: yarn install      # npm install
+      - run: yarn build   # npm run build --if-present
+      - run: |
+          touch docs/.vuepress/dist/.nojekyll
+          head package.json
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages # The branch the action should deploy to.
+          FOLDER: docs/.vuepress/dist # The folder the action should deploy.

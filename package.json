@@ -1,0 +1,64 @@
+{
+  "name": "notes-vuepress",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "author": "hedzr",
+  "private": true,
+  "description": "There's nothing",
+  "keywords": [
+    "documentation",
+    "hedzr",
+    "blog"
+  ],
+  "homepage": "https://github.com/hedzr/notes-vuepress",
+  "bugs": {
+    "url": "https://github.com/hedzr/notes-vuepress/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hedzr/notes-vuepress.git"
+  },
+  "scripts": {
+    "build": "vuepress build docs --temp .temp",
+    "dev": "vuepress dev docs --temp .temp",
+    "lint-md": "yarn lint-md:style && yarn lint-md:wording",
+    "lint-md:style": "remark --quiet --frail .",
+    "lint-md:wording": "textlint ./docs/**/*.md",
+    "show-help": "vuepress --help",
+    "view-info": "vuepress view-info docs --temp .temp"
+  },
+  "devDependencies": {
+    "@textlint-rule/textlint-rule-no-unmatched-pair": "^1.0.7",
+    "@vuepress/plugin-active-header-links": "^1.7.1",
+    "@vuepress/plugin-back-to-top": "1.7.1",
+    "@vuepress/plugin-google-analytics": "1.7.1",
+    "@vuepress/plugin-medium-zoom": "1.7.1",
+    "@vuepress/plugin-pwa": "1.7.1",
+    "@vuepress/plugin-search": "^1.7.1",
+    "markdown-it-abbr": "^1.0.4",
+    "markdown-it-deflist": "^2.1.0",
+    "markdown-it-footnote": "^3.0.2",
+    "markdown-it-ins": "^3.0.1",
+    "markdown-it-mark": "^3.0.1",
+    "markdown-it-sub": "^1.0.0",
+    "markdown-it-sup": "^1.0.0",
+    "remark-cli": "^9.0.0",
+    "remark-lint": "^8.0.0",
+    "remark-preset-lint-consistent": "^4.0.0",
+    "remark-preset-lint-recommended": "^5.0.0",
+    "textlint": "^11.7.6",
+    "textlint-filter-rule-comments": "^1.2.2",
+    "textlint-rule-apostrophe": "^2.0.0",
+    "textlint-rule-common-misspellings": "^1.0.1",
+    "textlint-rule-diacritics": "^1.0.0",
+    "textlint-rule-en-capitalization": "^2.0.3",
+    "textlint-rule-stop-words": "^2.0.7",
+    "textlint-rule-terminology": "^2.1.4",
+    "textlint-rule-write-good": "^1.6.2",
+    "vue-toasted": "^1.1.25",
+    "vuepress": "1.7.1",
+    "vuepress-plugin-flowchart": "^1.4.2",
+    "vuepress-theme-carbon": "^1.0.0"
+  }
+}
